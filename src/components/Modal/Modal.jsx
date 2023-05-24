@@ -1,33 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
-export class Modal extends React.Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
-  onBackdropClick = e => {
+export const Modal = ({ toggleModal, img, alt }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onBackdropClick = e => {
     if (e.currentTarget === e.target) {
-      this.props.toggleModal('', '');
+      toggleModal('', '');
     }
   };
-  handleKeyDown = e => {
+  const handleKeyDown = e => {
     if (e.key === 'Escape') {
-      this.props.toggleModal('', '');
+      toggleModal('', '');
     }
   };
-  render() {
-    return (
-      <div className="Overlay" onClick={this.onBackdropClick}>
-        <div className="Modal">
-          <img src={this.props.img} alt={this.props.alt} />
-        </div>
+
+  return (
+    <div className="Overlay" onClick={onBackdropClick}>
+      <div className="Modal">
+        <img src={img} alt={alt} />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 Modal.propTypes = {
   toggleModal: PropTypes.func.isRequired,

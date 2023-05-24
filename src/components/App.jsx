@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
@@ -8,94 +8,89 @@ import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { Modal } from 'components/Modal/Modal';
 import { FidgetSpinner } from 'react-loader-spinner';
 
-export class App extends React.Component {
-  state = {
-    pictures: [],
-    request: '',
-    page: 1,
-    totalPage: 1,
-    isOpen: false,
-    isLoadding: false,
-    error: false,
-    url: '',
-    alt: '',
-  };
-
-  async componentDidUpdate(_, prevState) {
-    if (
-      prevState.page !== this.state.page ||
-      prevState.request !== this.state.request
-    ) {
-      try {
-        this.toggleSpiner();
-        const response = await handleFetch(this.state.request, this.state.page);
-
-        prevState.request !== this.state.request
-          ? this.setState(prevState => ({
-              pictures: [...response.hits],
-              totalPage: Math.ceil(response.total / 12),
-            }))
-          : this.setState(prevState => ({
-              pictures: [...prevState.pictures, ...response.hits],
-            }));
-      } catch (error) {
-        this.setState({ error });
-      } finally {
-        this.toggleSpiner();
-      }
+export const App = () => {
+  const [pictures, setPictures] = useState([]);
+  const [request, setRequest] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [err, setErr] = useState(false);
+  const [url, setUrl] = useState('');
+  const [alt, setAlt] = useState('');
+  const isFirstLoad = useRef(true);
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      return;
     }
-  }
+    toggleSpiner();
+    handleFetch(request, page)
+      .then(response => {
+        setPictures([...response.hits]);
+        setTotalPage(Math.ceil(response.total - 12));
+      })
+      .catch(error => {
+        setErr(error);
+      })
+      .finally(toggleSpiner());
+  }, [request]);
 
-  toggleModal = (url, alt) => {
-    this.setState(prevState => ({ isOpen: !prevState.isOpen, url, alt }));
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      return;
+    }
+    toggleSpiner();
+    handleFetch(request, page)
+      .then(response => {
+        setPictures(prevState => [...prevState, ...response.hits]);
+      })
+      .catch(error => {
+        setErr(error);
+        console.log(err);
+      })
+      .finally(toggleSpiner());
+  }, [page]);
+
+  const toggleModal = (url, alt) => {
+    setIsOpen(prevState => !prevState);
+    setUrl(url);
+    setAlt(alt);
   };
-  toggleSpiner = () => {
-    this.setState(prevState => ({ isLoadding: !prevState.isLoadding }));
+  const toggleSpiner = () => {
+    setIsLoading(prevState => !prevState);
   };
-  onSubmit = request => {
-    this.setState({ request, page: 1 });
+  const onSubmit = request => {
+    setRequest(prevState => request);
+    setPage(1);
+    isFirstLoad.current = false;
   };
 
-  onLoadBtnClick = () => {
-    if (this.state.page < this.state.totalPage) {
-      this.setState(prevState => ({ page: prevState.page + 1 }));
+  const onLoadBtnClick = () => {
+    if (page < totalPage) {
+      setPage(prevState => prevState + 1);
     }
   };
+  return (
+    <div className="App">
+      <Searchbar onSubmit={onSubmit} />
+      {isLoading && (
+        <FidgetSpinner
+          visible={true}
+          height="80"
+          width="80"
+          ariaLabel="dna-loading"
+          wrapperStyle={{}}
+          wrapperClass="dna-wrapper"
+          ballColors={['#ff0000', '#00ff00', '#0000ff']}
+          backgroundColor="#F4442E"
+        />
+      )}
+      <ImageGallery>
+        <ImageGalleryItem data={pictures} toggleModal={toggleModal} />
+      </ImageGallery>
 
-  render() {
-    return (
-      <div className="App">
-        <Searchbar onSubmit={this.onSubmit} />
-        {this.state.isLoadding && (
-          <FidgetSpinner
-            visible={true}
-            height="80"
-            width="80"
-            ariaLabel="dna-loading"
-            wrapperStyle={{}}
-            wrapperClass="dna-wrapper"
-            ballColors={['#ff0000', '#00ff00', '#0000ff']}
-            backgroundColor="#F4442E"
-          />
-        )}
-        <ImageGallery>
-          <ImageGalleryItem
-            data={this.state.pictures}
-            toggleModal={this.toggleModal}
-          />
-        </ImageGallery>
-
-        {this.state.totalPage > this.state.page && (
-          <Button handleClick={this.onLoadBtnClick} />
-        )}
-        {this.state.isOpen && (
-          <Modal
-            toggleModal={this.toggleModal}
-            img={this.state.url}
-            alt={this.state.alt}
-          />
-        )}
-      </div>
-    );
-  }
-}
+      {totalPage > page && <Button handleClick={onLoadBtnClick} />}
+      {isOpen && <Modal toggleModal={toggleModal} img={url} alt={alt} />}
+    </div>
+  );
+};
