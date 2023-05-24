@@ -33,6 +33,7 @@ export const App = () => {
         setErr(error);
       })
       .finally(toggleSpiner());
+    // eslint-disable-next-line
   }, [request]);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export const App = () => {
         console.log(err);
       })
       .finally(toggleSpiner());
+    // eslint-disable-next-line
   }, [page]);
 
   const toggleModal = (url, alt) => {
