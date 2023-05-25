@@ -3,20 +3,19 @@ import PropTypes from 'prop-types';
 
 export const Modal = ({ toggleModal, img, alt }) => {
   useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.key === 'Escape') {
+        toggleModal('', '');
+      }
+    };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [toggleModal]);
 
   const onBackdropClick = e => {
     if (e.currentTarget === e.target) {
-      toggleModal('', '');
-    }
-  };
-  const handleKeyDown = e => {
-    if (e.key === 'Escape') {
       toggleModal('', '');
     }
   };
