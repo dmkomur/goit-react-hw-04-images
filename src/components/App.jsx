@@ -19,22 +19,6 @@ export const App = () => {
   const [url, setUrl] = useState('');
   const [alt, setAlt] = useState('');
   const isFirstLoad = useRef(true);
-  useEffect(() => {
-    if (isFirstLoad.current) {
-      return;
-    }
-    toggleSpiner();
-    handleFetch(request, page)
-      .then(response => {
-        setPictures([...response.hits]);
-        setTotalPage(Math.ceil(response.total - 12));
-      })
-      .catch(error => {
-        setErr(error);
-      })
-      .finally(toggleSpiner());
-    // eslint-disable-next-line
-  }, [request]);
 
   useEffect(() => {
     if (isFirstLoad.current) {
@@ -43,15 +27,35 @@ export const App = () => {
     toggleSpiner();
     handleFetch(request, page)
       .then(response => {
-        setPictures(prevState => [...prevState, ...response.hits]);
+        if (page > 1) {
+          setPictures(prevState => [...prevState, ...response.hits]);
+        } else {
+          setPictures([...response.hits]);
+          setTotalPage(Math.ceil(response.total - 12));
+        }
       })
       .catch(error => {
         setErr(error);
         console.log(err);
       })
-      .finally(toggleSpiner());
-    // eslint-disable-next-line
-  }, [page]);
+      .finally(() => toggleSpiner());
+  }, [request, page, err]);
+
+  // useEffect(() => {
+  //   if (isFirstLoad.current) {
+  //     return;
+  //   }
+  //   toggleSpiner();
+  //   handleFetch(request, page)
+  //     .then(response => {
+  //       setPictures(prevState => [...prevState, ...response.hits]);
+  //     })
+  //     .catch(error => {
+  //       setErr(error);
+  //       console.log(err);
+  //     })
+  //     .finally(toggleSpiner());
+  // }, [page]);
 
   const toggleModal = (url, alt) => {
     setIsOpen(prevState => !prevState);
